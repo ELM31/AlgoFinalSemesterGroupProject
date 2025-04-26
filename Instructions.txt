@@ -14,8 +14,7 @@ Hints:
 • Visualize citation graphs to understand reference structures.
 • Modularize code for each functionality to allow independent testing.
 Expected Outcomes:
-• A system that inputs documents and outputs detected plagiarized sections with refer-
-ences.
+• A system that inputs documents and outputs detected plagiarized sections with references.
 • Compressed versions of documents using Huffman Coding.
 • Visual representation of citation networks.
 • Sorted document lists based on selected criteria.
