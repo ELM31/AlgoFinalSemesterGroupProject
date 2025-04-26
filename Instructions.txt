@@ -1,0 +1,21 @@
+2. CSUF Document Scanner & Pattern Extractor
+Objective: Create a tool to scan student documents, detect plagiarism, and extract key information.
+Key Features:
+• String Matching: Use Rabin-Karp and KMP algorithms to detect duplicate phrases or plagiarized content. Refer to rabin karp.py and kmp algorithm.py.
+• Naive Search: Implement for real-time search in documents. See naive search.py.
+• Compression: Apply Huffman Coding to compress extracted data. Refer to huffman encoding.py.
+• Graph Traversal: Model citations or references as a graph and use BFS/DFS to analyze connections. See bfs.py and dfs.py.
+• Sorting: Organize files by author, title, or date using Merge Sort or Counting Sort.
+   Refer to merge sort.py and counting sort.py.
+• Optimization: Use greedy or dynamic programming approaches to prioritize scanning based on relevance.
+Hints:
+• Utilize plain text files for document input.
+• Generate sample documents with intentional overlaps for testing plagiarism detection.
+• Visualize citation graphs to understand reference structures.
+• Modularize code for each functionality to allow independent testing.
+Expected Outcomes:
+• A system that inputs documents and outputs detected plagiarized sections with refer-
+ences.
+• Compressed versions of documents using Huffman Coding.
+• Visual representation of citation networks.
+• Sorted document lists based on selected criteria.
