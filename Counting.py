@@ -26,25 +26,6 @@ def counting_sort(arr, exp):
     for i in range(n):
         arr[i] = output[i] #overwrite original array with sorted values
 
-def radix_sort(arr):
-    #Least significant Digit approach (LSD)
-    #Find the maximum number to determine the number of digits
-    max_num = max(arr)
-    exp = 1
-
-    #Continue sorting for each digit place value
-    while max_num // exp > 0:
-        counting_sort(arr, exp)
-        exp *= 10
-    return arr
-
-#Generate a random list of numbers
-random_list = [random.randint(10, 9999) for _ in range(10)]
-
-print("Original Array:", random_list)
-sorted_arr = radix_sort(random_list)
-print("Sorted array:", sorted_arr)
-
 
 
 
