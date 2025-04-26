@@ -1,4 +1,4 @@
-#Radix Sort
+#Counting sort
 
 import random
 
