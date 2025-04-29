@@ -27,7 +27,7 @@ class DocumentScannerGUI:
         root.configure(bg='#101010')
         dark_title_bar(root)
         root.geometry("+0+0")
-        WindowSet.setScreen(root, wRatio= .65, hRatio= .84)
+        WindowSet.setScreen(root, wRatio= .72, hRatio= .84) 
 
         self.stored_huffman_codes = None
         self.stored_compressed_path = None
@@ -76,12 +76,12 @@ class DocumentScannerGUI:
         self.result_label2.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
         #Widget properties for the Huffman code textbox 
         self.huffman_codes_text1 = Text(root, 
-                                        height=20, width=60,
+                                        height=20, width=67,
                                         fg = "#c1bec8", bg="#585858")
         self.huffman_codes_text1.grid(row=3, column=0, padx=5, pady=5, sticky="nsew")
 
         self.huffman_codes_text2 = Text(root, 
-                                        height=20, width=60,
+                                        height=20, width=67,
                                         fg = "#c1bec8", bg="#585858")
         self.huffman_codes_text2.grid(row=3, column=1, padx=5, pady=5, sticky="nsew")
 
@@ -104,7 +104,7 @@ class DocumentScannerGUI:
         #Widget properties for the decoded textbox 
         self.decoded_text_display = Text(root, 
                                         height=10, 
-                                        width=70, 
+                                        width=74, 
                                         fg = '#c1bec8',
                                         bg="#585858")
         self.decoded_text_display.grid(row=5, column=0, padx=5, pady=5, sticky="nsew", columnspan=2)
