@@ -46,7 +46,7 @@ def rabin_karp_lines(file1, file2, q=101):
 
     return duplicates
 
-#exaple use of simpleSimilarity
+#example use of simpleSimilarity
 print(simpleSimilarity('Samples/plag.txt', 'Samples/example', 'utf8'))
 
 #example use of rabin_karp_lines
