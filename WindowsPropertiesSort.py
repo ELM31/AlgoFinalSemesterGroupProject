@@ -4,6 +4,20 @@ import time
 import os
 import MergeSortModified
 
+'''    
+    example use:
+    filepaths = ("Samples/plag.txt", "Samples/frankcopy.txt", "Samples/Frankenstein.txt", "Samples/Romea and Juliet.txt", "Samples/example", "Samples/Moby Dick.txt")
+    print(sortByTitle(filepaths))
+    print(sortByDateCreated(filepaths))
+    print(sortByDateModified(filepaths))
+    
+    Output:
+    ['example', 'frankcopy.txt', 'Frankenstein.txt', 'Moby Dick.txt', 'plag.txt', 'Romea and Juliet.txt']
+    [('example', 'Mon Apr 28 17:30:21 2025'), ('plag.txt', 'Mon Apr 28 17:31:05 2025'), ('frankcopy.txt', 'Mon Apr 28 17:33:20 2025'), ('Frankenstein.txt', 'Mon Apr 28 17:33:20 2025'), ('Moby Dick.txt', 'Mon Apr 28 17:33:20 2025'), ('Romea and Juliet.txt', 'Mon Apr 28 17:33:20 2025')]
+    [('example', 'Mon Apr 28 17:31:28 2025'), ('plag.txt', 'Mon Apr 28 17:32:39 2025'), ('Frankenstein.txt', 'Mon Apr 28 17:33:20 2025'), ('Moby Dick.txt', 'Mon Apr 28 17:33:20 2025'), ('Romea and Juliet.txt', 'Mon Apr 28 17:33:20 2025'), ('frankcopy.txt', 'Wed Apr 30 18:41:05 2025')]
+    '''
+
+
 def sortByTitle(filePaths):
     """
     Sorts a list of file paths by the title property of the files, returns list.
@@ -43,13 +57,3 @@ def sortByDateCreated(filePaths):
     for i in range(len(sorted_dates)):
         sorted_dates[i] = (sorted_dates[i][0], time.ctime(sorted_dates[i][1]))
     return sorted_dates
-
-#user input
-
-filepaths = ("Samples/plag.txt", "Samples/frankcopy.txt", "Samples/Frankenstein.txt", "Samples/Romea and Juliet.txt", "Samples/example", "Samples/Moby Dick.txt")
-#title sort
-#print(sortByTitle(filepaths))
-#print(sortByDateCreated(filepaths))
-print(sortByDateModified(filepaths))
-
-
