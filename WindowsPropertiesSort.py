@@ -6,7 +6,7 @@ import MergeSortModified
 
 def sortByTitle(filePaths):
     """
-    Sorts a list of file paths by the title property of the files.
+    Sorts a list of file paths by the title property of the files, returns list.
     """
     filetitles = []
     for filePath in filePaths:
@@ -16,7 +16,7 @@ def sortByTitle(filePaths):
 
 def sortByDateModified(filePaths):
     """
-    Sorts a list of file paths by the date property of the files, oldest to newest.
+    Sorts a list of file paths by the date property of the files, oldest to newest, returns tuple.
     """
     filedates = []
     for filePath in filePaths:
@@ -31,7 +31,7 @@ def sortByDateModified(filePaths):
     
 def sortByDateCreated(filePaths):
     """
-    Sorts a list of file paths by the date property of the files, oldest to newest.
+    Sorts a list of file paths by the date property of the files, oldest to newest, returns tuple.
     """
     filedates = []
     for filePath in filePaths:
