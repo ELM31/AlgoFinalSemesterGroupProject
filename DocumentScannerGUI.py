@@ -3,6 +3,7 @@ import shutil                                           #Copy file management
 from tkinter import *                                   #Primary GUI used 
 from tkinter import filedialog, messagebox              #Tkinters messagebox uses
 from algo.huffman import compress_file                  #Import some functions from huffman py in the algo folder 
+from algo.sort import merge_sort                        #For sorting 
 from cosmetic import WindowSet                          #Import WindowSet from the cosmetic folder for easier window config
 from cosmetic.dark_title_bar import *                   #Purely cosmetic function to make title bar dark to fit with the theme
 import pdfplumber
@@ -136,17 +137,42 @@ class DocumentScannerApp:
         self.show_file_list(action="compress")
         
 
+    def update_file_list(self, *args):
+        # Clear old checkboxes
+        for widget in self.file_list_frame.winfo_children():
+            widget.destroy()
+
+        # Get sorted file list
+        files = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.txt')]
+        sort_choice = self.sort_var.get()
+
+        if sort_choice == "Alphabetical":
+            files = merge_sort(files)
+        elif sort_choice == "Newest First":
+            files = sorted(files, key=lambda f: os.path.getmtime(os.path.join(DOCUMENTS_FOLDER, f)), reverse=True)
+        elif sort_choice == "Largest File Size":
+            files = sorted(files, key=lambda f: os.path.getsize(os.path.join(DOCUMENTS_FOLDER, f)), reverse=True)
+
+        # Recreate checkboxes
+        self.file_vars = {}
+        for fname in files:
+            var = BooleanVar()
+            chk = Checkbutton(self.file_list_frame, text=fname, variable=var,
+                              font=theFont1,bg=color6, fg=color2)
+            chk.pack(anchor="w")
+            self.file_vars[fname] = var
 
     def show_file_list(self, action):
         self.current_action = action
 
+        
         # Clear window
         for widget in self.root.winfo_children():
             widget.destroy()
 
         # Instructions
         instructions = {
-            "view": "Viewing all imported files:",
+            "view": "View all imported files:",
             "compare": "Select 2 files to compare:",
             "plagiarism": "Select 1 file to check for plagiarism:",
             "search": "Select 1 file to search:",
@@ -158,17 +184,26 @@ class DocumentScannerApp:
                             bg="#101010", fg=color4)
         instr_label.pack(pady=10)
 
-        # List files ONLY .txt files 
-        files = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.txt')]
-        self.file_vars = {}
+         # Sort options
+        sort_options = ["Alphabetical", "Newest First", "Largest File Size"]
+        self.sort_var = StringVar(self.root, value=sort_options[0])
+        # Sort menu
+        sort_menu = OptionMenu(self.root, self.sort_var, *sort_options)
+        sort_menu.config(bg=color6, fg=color4, 
+                         font=theFont1,
+                         activebackground= color1, activeforeground=color4,
+                         cursor="hand2",
+                         highlightbackground=color6)
+        sort_menu['menu'].config(bg=color1, fg=color4,
+                                activebackground=color6)
+        sort_menu.pack(pady=5, anchor="e")
 
-        for fname in files:
-            var = BooleanVar()
-            chk = Checkbutton(self.root, text=fname, variable=var,
-                              bg="#101010", fg=color2,
-                              font=theFont1)
-            chk.pack(anchor="w")
-            self.file_vars[fname] = var
+        # Frame to hold file checkboxes
+        self.file_list_frame = Frame(self.root, bg= color6, 
+                                    borderwidth=2, relief="sunken")
+        self.file_list_frame.pack()
+        self.update_file_list()
+        
 
         # Confirm button
         confirm_btn = Button(self.root, text="Continue", 
@@ -176,7 +211,7 @@ class DocumentScannerApp:
                              bg=color2, fg=color6,
                              activebackground= "#6a6a6a", activeforeground=color4,
                              cursor="hand2",
-                             font=theFont2)
+                             font=theFont1)
         confirm_btn.pack(pady=10)
 
         # Back button
@@ -185,11 +220,15 @@ class DocumentScannerApp:
                           bg=color2, fg=color6,
                           activebackground= "#6a6a6a", activeforeground=color4,
                           cursor="hand2",
-                          font=theFont2)   
+                          font=theFont1)   
         back_btn.pack()
+
+
 
     def handle_action(self):
         selected_files = [fname for fname, var in self.file_vars.items() if var.get()]
+
+        
 
         if not selected_files:
             messagebox.showwarning("No Selection", "Please select at least one file.")
@@ -213,6 +252,7 @@ class DocumentScannerApp:
                         font=theFont1)
             compression_details_textbox.pack(pady=10)
             compression_details_textbox.insert(END, "\n\n".join(result_msgs))
+        
         else: 
             print(f"Action: {self.current_action}, Selected: {selected_files}")
 
