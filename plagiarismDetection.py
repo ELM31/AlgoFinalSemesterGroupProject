@@ -16,7 +16,7 @@ def simpleSimilarity(file1, file2, format='CP1252'):
     return SequenceMatcher(None, read1, read2).ratio() * 100
 
 #finds the exact duplicate lines in two files using Rabin-Karp hashing
-def rabin_karp_lines(file1, file2, q=101):
+def rabin_karp_duplicate(file1, file2, q=101):
     d = 256  #Number of characters in the ASCII alphabet (256 ASCII)
     line_hashes = set()  #store line hashes in set
     
@@ -50,7 +50,7 @@ def rabin_karp_lines(file1, file2, q=101):
 print(simpleSimilarity('Samples/plag.txt', 'Samples/example', 'utf8'))
 
 #example use of rabin_karp_lines
-duplicates = rabin_karp_lines('Samples/example', 'Samples/plag.txt', 101)
+duplicates = rabin_karp_duplicate('Samples/example', 'Samples/plag.txt', 101)
 print("Duplicate lines found:")
 for line in duplicates:
     print(line)
