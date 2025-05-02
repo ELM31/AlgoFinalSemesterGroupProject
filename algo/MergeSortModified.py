@@ -48,7 +48,7 @@ def merge_sort_string(arr):
 def isSmallerDate(left, right):
     # Compare two dates, left and right are tuples (filename, timestamp)
     left = left[1]  # Extract the timestamp from the tuple
-    right = right[1]  # Extract the timestamp from the tuple
+    right = right[1]
     if left < right:
         return True
     else:
