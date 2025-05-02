@@ -1,54 +1,57 @@
-def merge_sort(flights):
+import os
 
-    if len(flights) > 1:
-        mid = len(flights) // 2 # Find the middle index
-        left_half = flights[:mid] #Divide list into halves
-        right_half = flights[mid:]
+def merge_sort(file_names):
+    if len(file_names) > 1:
+        mid = len(file_names) // 2  # Find the middle index
+        left_half = file_names[:mid]  # Divide list into halves
+        right_half = file_names[mid:]
 
         merge_sort(left_half)
         merge_sort(right_half)
 
         i = j = k = 0
         while i < len(left_half) and j < len(right_half):
-            if left_half[i][1] < right_half[j][1]:
-                flights[k] = left_half[i]
+            if left_half[i] < right_half[j]:  # Compare alphabetically
+                file_names[k] = left_half[i]
                 i += 1
             else:
-                flights[k] = right_half[j]
+                file_names[k] = right_half[j]
                 j += 1
             k += 1
 
         while i < len(left_half):
-            flights[k] = left_half[i]
+            file_names[k] = left_half[i]
             i += 1
             k += 1
-            
+
         while j < len(right_half):
-            flights[k] = right_half[j]
+            file_names[k] = right_half[j]
             j += 1
             k += 1
 
+    return file_names
 
-def counting_sort(arr, exp):
-    n = len(arr)
-    output = [0] * n
-    count = [0] * 10
+def sort_text_files_by_name(directory):
+    try:
+        # Get a list of all text files in the directory
+        text_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
 
-    #Count occurences of each digit in the current place value
-    for i in range(n):
-        index = (arr[i] // exp) % 10
-        count[index] += 1
+        # Sort the text files using merge sort
+        sorted_files = merge_sort(text_files)
 
-    #update count[i] so that it contains actual position in the output[]
-    for i in range(1, 10):
-        count[i] += count[i - 1] # Cumulative sum for stable sorting
+        return sorted_files
 
-    #Build the output array by placing elements in correct order    
-    for i in range(n - 1, -1, -1):
-        index = (arr[i] // exp) % 10
-        output[count[index] - 1] = arr[i]
-        count[index] -= 1 #Decrement count to handle duplicates
+    except FileNotFoundError:
+        print(f"Error: The directory '{directory}' does not exist.")
+        return []
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return []
 
-    #Copy sorted output back to the original array
-    for i in range(n):
-        arr[i] = output[i] #overwrite original array with sorted values
+# test
+if __name__ == "__main__":
+    directory_path = input("Enter the directory path containing text files: ")
+    sorted_files = sort_text_files_by_name(directory_path)
+    print("Sorted text files:")
+    for file in sorted_files:
+        print(file)
