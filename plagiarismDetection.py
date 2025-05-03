@@ -1,4 +1,7 @@
+import sys
 from difflib import SequenceMatcher
+from algo.KMP_test import kmp_search
+
 
 #gives a ration of similarity between two files in percentage
 def simpleSimilarity(file1, file2, format='CP1252'):
@@ -46,11 +49,53 @@ def rabin_karp_duplicate(file1, file2, q=101):
 
     return duplicates
 
+def KMPDuplicate(file1, file2):
+    #KMP algorithm to find duplicates in two files, file 1 acts as the pattern to search for
+    #only using utf8 encoding for now so maybe change it
+    positions = dict()
+    patterns = []
+    with open(file1, 'r', encoding='utf8') as f1, open(file2, 'r', encoding='utf8') as f2:
+        patterns = [line.strip() for line in f1.readlines()]
+        text = f2.read().strip()
+        #check if file is empty
+        if not text:
+            raise ValueError("The second file is empty.")
+        
+        for line in patterns:
+            #skip blank lines
+            if not line:
+                continue
+            
+            positions[line] = []  # Initialize the line in the dict
+            positions[line] = kmp_search(text, line)
+    #returns a dict{line: position}, position is the index of the line in the text from file 2
+    return positions
+
+#helper for getting only the duplicates from the dict returned by KMPDuplicate
+def getDuplicatesFromDict(dictionary):
+    """
+    Get the key from the value in a dictionary.
+    if value is empty return the key
+    key is the line, value is the position in the text
+    """
+    duplicates = dict()
+    for key, val in dictionary.items():
+        if val != []:
+            duplicates[key] = val
+    return duplicates
+
+
+
+
 #example use of simpleSimilarity
-print(simpleSimilarity('Samples/plag.txt', 'Samples/example', 'utf8'))
+#print(simpleSimilarity('Samples/plag.txt', 'Samples/example', 'utf8'))
 
 #example use of rabin_karp_lines
-duplicates = rabin_karp_duplicate('Samples/example', 'Samples/plag.txt', 101)
-print("Duplicate lines found:")
-for line in duplicates:
-    print(line)
+#duplicates = rabin_karp_duplicate('Samples/example', 'Samples/plag.txt', 101)
+#print("Duplicate lines found:")
+#for line in duplicates:
+#    print(line)
+
+#pos = KMPDuplicate('Samples/frankcopy.txt', 'Samples/Frankenstein.txt')
+#print(pos)
+#print(getDuplicatesFromDict(pos))

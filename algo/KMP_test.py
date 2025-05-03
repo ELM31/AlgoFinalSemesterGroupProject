@@ -41,11 +41,5 @@ def kmp_search(text, pattern):
                 j = lps[j - 1]
             else:
                 i += 1
+                
     return positions
-
-#Example Input:
-text = "Hello World! this is Computer Science"
-pattern = "Computer"
-
-#Output
-print("KMP match found at:", kmp_search(text, pattern))
