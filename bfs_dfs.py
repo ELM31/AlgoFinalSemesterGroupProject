@@ -1,6 +1,8 @@
 from collections import deque
+import matplotlib.pyplot as plt
+import networkx as nx
 
-# Define the DFS function using recursion
+# DFS using recursion
 def dfs(graph, node, visited=None):
     if visited is None:
         visited = set()
@@ -11,53 +13,62 @@ def dfs(graph, node, visited=None):
         visited.add(node)
 
         for neighbor in graph.get(node, []):
-            traversal_order.extend(dfs(graph, neighbor, visited))  # Recursive DFS call for the neighbor
+            traversal_order.extend(dfs(graph, neighbor, visited))
 
     return traversal_order
 
-# Define the BFS function
+# BFS using queue
 def bfs(graph, start):
-    visited = set()  # Set to track visited nodes
-    queue = deque([start])  # Queue for BFS starting from the given node
+    visited = set()
+    queue = deque([start])
     traversal_order = []
 
     while queue:
-        node = queue.popleft()  # Dequeue a node
+        node = queue.popleft()
         if node not in visited:
-            traversal_order.append(node)  # Add visited node to traversal order
-            visited.add(node)  # Mark as visited
-            for neighbor in graph.get(node, []):  # Traverse neighbors
+            traversal_order.append(node)
+            visited.add(node)
+            for neighbor in graph.get(node, []):
                 if neighbor not in visited:
                     queue.append(neighbor)
 
     return traversal_order
 
-if __name__ == "__main__":
-    graph = {}
+# Draw the graph of documents and references
+def draw_document_graph(graph, traversal_order=None, title="Document Reference Map"):
+    G = nx.DiGraph()
 
-    print("Enter number of citation relationships:")
-    edges = int(input())
+    for doc, references in graph.items():
+        for ref in references:
+            G.add_edge(doc, ref)
 
-    print("Enter each citation relationship (Document1 Document2):")
-    print("(This means Document1 cites Document2)")
-    for _ in range(edges):
-        doc1, doc2 = input().split()
+    pos = nx.spring_layout(G, k=0.8)
+    nx.draw(G, pos, with_labels=True, node_color='lightgreen', edge_color='gray',
+            node_size=2500, font_size=10, arrowsize=20)
 
-        if doc1 not in graph:
-            graph[doc1] = []
-        graph[doc1].append(doc2)
+    if traversal_order:
+        edges_in_path = list(zip(traversal_order, traversal_order[1:]))
+        nx.draw_networkx_edges(G, pos, edgelist=edges_in_path, edge_color='red', width=2)
 
-        # Uncomment the following lines if citations are bidirectional
-        # if doc2 not in graph:
-        #     graph[doc2] = []
-        # graph[doc2].append(doc1)
+    plt.title(title)
+    plt.show()
 
-    print("Enter the starting document for DFS Traversal:")
-    start_doc_dfs = input()
-    print("\nDFS Traversal Order:")
-    print(" -> ".join(dfs(graph, start_doc_dfs)))
+# test documents
+documents = {
+    "Paper A": ["Paper B", "Paper C"],
+    "Paper B": ["Paper D"],
+    "Paper C": ["Paper D", "Paper E"],
+    "Paper D": [],
+    "Paper E": ["Paper F"],
+    "Paper F": []
+}
 
-    print("\nEnter the starting document for BFS Traversal:")
-    start_doc_bfs = input()
-    print("\nBFS Traversal Order:")
-    print(" -> ".join(bfs(graph, start_doc_bfs)))
+# dfs test
+dfs_order = dfs(documents, "Paper A")
+print("DFS Order:", dfs_order)
+draw_document_graph(documents, dfs_order, "DFS Document Reference Traversal")
+
+# bfs test
+bfs_order = bfs(documents, "Paper A")
+print("BFS Order:", bfs_order)
+draw_document_graph(documents, bfs_order, "BFS Document Reference Traversal")
