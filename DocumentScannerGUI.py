@@ -1,15 +1,18 @@
-import os                                               #Directory/folder manipulation 
-import shutil                                           #Copy file management 
-from tkinter import *                                   #Primary GUI used 
-from tkinter import filedialog, messagebox              #Tkinters messagebox uses
-from algo.huffman import compress_file                  #Import some functions from huffman py in the algo folder 
-from algo.sort import merge_sort                        #For sorting 
-from cosmetic import WindowSet                          #Import WindowSet from the cosmetic folder for easier window config
-from algo.naive_search import naive_search              # Use of naive search to find patterns
-from cosmetic.dark_title_bar import *                   #Purely cosmetic function to make title bar dark to fit with the theme
-from plagiarismDetection import *                       #For plagarism 
-import pdfplumber                                       #Convert pdf to text
-from datetime import date                               #For current date 
+import os                                                       #Directory/folder manipulation 
+import shutil                                                   #Copy file management 
+from tkinter import *                                           #Primary GUI used 
+from tkinter import filedialog, messagebox                      #Tkinters messagebox uses
+from algo.huffman import compress_file                          #Import some functions from huffman py in the algo folder 
+from algo.sort import merge_sort                                #For sorting 
+from cosmetic import WindowSet                                  #Import WindowSet from the cosmetic folder for easier window config
+from algo.naive_search import naive_search                      # Use of naive search to find patterns
+from cosmetic.dark_title_bar import *                           #Purely cosmetic function to make title bar dark to fit with the theme
+from plagiarismDetection import *                               #For plagarism 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #
+import networkx as nx                                           #
+import matplotlib.pyplot as plt                                 #
+import pdfplumber                                               #Convert pdf to text
+from datetime import date                                       #For current date 
 
 #Today's Date for the label we use later 
 today = date.today()
@@ -79,7 +82,8 @@ class DocumentScannerApp:
             ("Compare Files", self.compare_files),
             ("Plagiarism Checker", self.plagiarism_check),
             ("Naive Search", self.naive_search),
-            ("Compression", self.compress_files)
+            ("Compression", self.compress_files),
+            ("Citation Map", self.citation_map)
         ]
 
         for label, command in actions:
@@ -135,8 +139,10 @@ class DocumentScannerApp:
         self.show_file_list(action="search")
     def compress_files(self):
         self.show_file_list(action="compress")
+    def citation_map(self):
+        self.show_file_list(action="citation")
         
-
+    # Function to update files based on sort 
     def update_file_list(self, *args):
         # Clear old checkboxes
         for widget in self.file_list_frame.winfo_children():
@@ -159,7 +165,8 @@ class DocumentScannerApp:
                               font=theFont1,bg=color6, fg=color2)
             chk.pack(anchor="w")
             self.file_vars[fname] = var
-
+    
+    #Function to show file
     def show_file_list(self, action):
         self.current_action = action
 
@@ -173,7 +180,8 @@ class DocumentScannerApp:
             "compare": "Select 2 files to compare:",
             "plagiarism": "Select 1 file to check for plagiarism:",
             "search": "Select 1 file to search:",
-            "compress": "Select 1 or more files to compress:"
+            "compress": "Select 1 or more files to compress:",
+            "citation": "Choose files for Citation Map"
         }
 
         # Label for instruction
@@ -240,6 +248,7 @@ class DocumentScannerApp:
         except Exception as e:
             self.text_display.insert(END, f"Error loading file: {e}")
 
+    # function for naive search 
     def run_naive_search(self, selected_files):
         pattern = self.pattern_entry.get()
         if not pattern:
@@ -268,6 +277,7 @@ class DocumentScannerApp:
         self.search_results_textbox.pack(pady=10)
         self.search_results_textbox.insert(END, "\n\n".join(results))
     
+    # Function to alter UI for search 
     def show_search_ui(self, selected_files):
         # Clear window
         for widget in self.root.winfo_children():
@@ -300,6 +310,7 @@ class DocumentScannerApp:
                         font=theFont1)
         back_btn.pack()
 
+    # Function to alter UI for plagarism check
     def show_plag_ui(self, selected_files):
         # Clear window 
         for widget in self.root.winfo_children():
@@ -337,13 +348,100 @@ class DocumentScannerApp:
                              cursor="hand2",
                              font=theFont1)
         back_button.pack(pady=10)
+ 
 
-            
+    def extract_citations(self, selected_files, known_titles):
+        citation_graph = {os.path.splitext(os.path.basename(f))[0]: [] for f in selected_files}
 
+        # Phrases that often signal a citation
+        citation_phrases = [
+            "according to", "as discussed in", "refer to", "see", 
+            "cited by", "mentioned in", "based on"
+        ]
+
+        for file_path in selected_files:
+            with open(file_path, 'r', encoding='utf8') as f:
+                text = f.read().lower()  # Make lowercase for easier matching
+
+            # Get current document title from filename (without extension)
+            current_title = os.path.splitext(os.path.basename(file_path))[0]
+
+            for target_title in known_titles:
+                if target_title == current_title:
+                    continue  # Skip self-citation
+
+                target_lower = target_title.lower()
+
+                # Direct title mention
+                if target_lower in text:
+                    citation_graph[current_title].append(target_title)
+                    continue  # Avoid double counting if direct match is found
+
+                # Phrase-based matching
+                for phrase in citation_phrases:
+                    pattern = f"{phrase} {target_lower}"
+                    if pattern in text:
+                        citation_graph[current_title].append(target_title)
+                        break  # Only count once per target title
+        return citation_graph
+
+
+                
+    def show_citation_graph(self):
+        if not hasattr(self, 'citation_graph'):
+            print("No citation graph to display yet!")
+            return
+
+        # Create graph
+        G = nx.DiGraph()
+
+        for doc, citations in self.citation_graph.items():
+            for cited_doc in citations:
+                G.add_edge(doc, cited_doc)
+
+        # Create matplotlib figure
+        fig, ax = plt.subplots(figsize=(6, 5))
+        pos = nx.spring_layout(G, k=0.5)
+        nx.draw(G, pos, with_labels=True, node_color='lightblue', 
+                edge_color='gray', node_size=2000, font_size=10, 
+                arrowsize=20, ax=ax)
+
+        ax.set_title("Citation Map", fontsize=14)
+
+        # Embed into Tkinter GUI
+        if hasattr(self, 'graph_canvas'):
+            self.graph_canvas.get_tk_widget().destroy()  # Remove previous graph
+
+        self.graph_canvas = FigureCanvasTkAgg(fig, master=self.root)
+        self.graph_canvas.draw()
+        self.graph_canvas.get_tk_widget().pack(pady=10)                                                 
+
+    def show_citation_graph_ui(self, selected_files):
+        self.known_titles = [os.path.splitext(os.path.basename(f))[0] for f in selected_files]
+
+        # Clear window
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        # Back Button
+        back_button = Button(self.root, text="Back", command=self.create_main_menu, 
+                             bg=color2, fg=color6,
+                             activebackground= "#6a6a6a", activeforeground=color4,
+                             cursor="hand2",
+                             font=theFont1)
+        back_button.pack(pady=10)
+
+        # Run citation extraction if graph doesn't exist yet
+        if not hasattr(self, 'citation_graph'):
+            self.known_titles = [os.path.splitext(os.path.basename(f))[0] for f in selected_files]
+            self.citation_graph = self.extract_citations(selected_files, self.known_titles)
+
+        # Now show the embedded graph
+        self.show_citation_graph()
 
 
     def handle_action(self):
-        selected_files = [fname for fname, var in self.file_vars.items() if var.get()]
+        selected_files = [os.path.join(DOCUMENTS_FOLDER, fname) for fname, var in self.file_vars.items() if var.get()]
 
         if not selected_files:
             messagebox.showwarning("No Selection", "Please select at least one file.")
@@ -402,7 +500,9 @@ class DocumentScannerApp:
 
             self.compression_details_textbox.insert(END, "\n\n".join(result_msgs))
 
-
+        # Handle citation graph action 
+        elif self.current_action == "citation":
+            self.show_citation_graph_ui(selected_files)
         else: 
             print(f"Action: {self.current_action}, Selected: {selected_files}")
 
