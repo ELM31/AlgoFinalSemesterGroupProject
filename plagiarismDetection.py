@@ -49,15 +49,24 @@ def rabin_karp_duplicate(file1, file2, q=101):
 
     return duplicates
 
-def KMPDuplicate(file1, file2):
+def KMPDuplicate(file1, file2, ignore_case=False):
     #KMP algorithm to find duplicates in two files, file 1 acts as the pattern to search for
     #only using utf8 encoding for now so maybe change it
     positions = dict()
     patterns = []
+
+    for line in patterns:
+        if ignore_case:
+            line = line.lower()
+            text = text.lower()
+
     with open(file1, 'r', encoding='utf8') as f1, open(file2, 'r', encoding='utf8') as f2:
         patterns = [line.strip() for line in f1.readlines()]
         text = f2.read().strip()
         #check if file is empty
+        if not patterns:
+            raise ValueError("The first file (pattern file) is empty.")
+        
         if not text:
             raise ValueError("The second file is empty.")
         
@@ -84,6 +93,25 @@ def getDuplicatesFromDict(dictionary):
             duplicates[key] = val
     return duplicates
 
+def plagiarism_summary(file1, file2, encoding='utf8', q=101, ignore_case=False):
+    summary = dict()
+
+    # 1. Similarity Score
+    similarity = simpleSimilarity(file1, file2, format=encoding)
+    summary['Similarity Score (%)'] = round(similarity, 2)
+
+    # 2. Rabin-Karp Duplicate Lines
+    duplicates = rabin_karp_duplicate(file1, file2, q=q)
+    summary['Exact Duplicate Lines Count'] = len(duplicates)
+    summary['Exact Duplicate Lines'] = duplicates
+
+    # 3. KMP Pattern Matches
+    kmp_results = KMPDuplicate(file1, file2)  # we can add ignore_case if we upgrade KMPDuplicate
+    kmp_duplicates = getDuplicatesFromDict(kmp_results)
+    summary['Pattern Matches Count'] = len(kmp_duplicates)
+    summary['Pattern Matches'] = kmp_duplicates
+
+    return summary
 
 
 
@@ -99,3 +127,8 @@ def getDuplicatesFromDict(dictionary):
 #pos = KMPDuplicate('Samples/frankcopy.txt', 'Samples/Frankenstein.txt')
 #print(pos)
 #print(getDuplicatesFromDict(pos))
+
+#result = plagiarism_summary('Documents/sample1.txt', 'Documents/sample2.txt')
+
+#for key, value in result.items():
+#    print(f"{key}: {value}")
