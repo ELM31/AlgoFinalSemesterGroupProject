@@ -7,6 +7,7 @@ from algo.sort import merge_sort                        #For sorting
 from cosmetic import WindowSet                          #Import WindowSet from the cosmetic folder for easier window config
 from algo.naive_search import naive_search              # Use of naive search to find patterns
 from cosmetic.dark_title_bar import *                   #Purely cosmetic function to make title bar dark to fit with the theme
+from plagiarismDetection import *                       #For plagarism 
 import pdfplumber                                       #Convert pdf to text
 from datetime import date                               #For current date 
 
@@ -41,7 +42,7 @@ class DocumentScannerApp:
     #initilzie everything 
     def __init__(self, root):
         self.root = root
-        self.root.title("Tuffy's Document Manager")
+        self.root.title("Tuffy's Document Scanner")
         self.current_action = None
         root.configure(bg='#101010')
         dark_title_bar(root)
@@ -299,6 +300,45 @@ class DocumentScannerApp:
                         font=theFont1)
         back_btn.pack()
 
+    def show_plag_ui(self, selected_files):
+        # Clear window 
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        # Paths of selected files
+        file1 = os.path.join(DOCUMENTS_FOLDER, selected_files[0])
+        file2 = os.path.join(DOCUMENTS_FOLDER, selected_files[1])
+
+        # Call plagiarism summary function (returns dict)
+        summary_dict = plagiarism_summary(file1, file2)
+
+        # Convert dict to a nicely formatted string
+        result_lines = []
+        for key, value in summary_dict.items():
+            if isinstance(value, list):
+                value_str = "\n".join(value)
+            else:
+                value_str = str(value)
+            result_lines.append(f"{key}:\n{value_str}\n")
+        result_text = "\n".join(result_lines)
+
+        # Display result in a Text widget
+        result_label = Label(self.root, text="Plagiarism Detection Result", bg=color1, fg=color2, font=theFont2)
+        result_label.pack(pady=10)
+
+        result_textbox = Text(self.root, bg=color1, fg=color5, font=theFont1, wrap="word")
+        result_textbox.pack(pady=10)
+        result_textbox.insert(END, result_text)
+
+        # Back button to return to main menu
+        back_button = Button(self.root, text="Back", command=lambda: self.create_main_menu(), 
+                             bg=color2, fg=color6,
+                             activebackground= "#6a6a6a", activeforeground=color4,
+                             cursor="hand2",
+                             font=theFont1)
+        back_button.pack(pady=10)
+
+            
 
 
 
@@ -309,6 +349,7 @@ class DocumentScannerApp:
             messagebox.showwarning("No Selection", "Please select at least one file.")
             return
         
+        # Handle view action
         if self.current_action == "view":
             if len(selected_files) > 1:
                 messagebox.showwarning("Multiple Selection", "Please select only one file to view.")
@@ -319,12 +360,21 @@ class DocumentScannerApp:
             self.text_display.pack(pady=10)
             self.view_file_content(selected_files[0])
 
+        # Handle search action
         elif self.current_action == "search":
             if len(selected_files) > 1:
                 messagebox.showwarning("Multiple Selection", "Please select only one file to view.")
                 return
             self.show_search_ui(selected_files)
+        
+        # Handle plagiarism action
+        elif self.current_action =="plagiarism":
+            if len(selected_files) !=2:
+                messagebox.showwarning("Please select two files to compare.")
+                return
+            self.show_plag_ui(selected_files)
 
+        # Handle compression action
         elif self.current_action == "compress":
             result_msgs = []
             for fname in selected_files:
