@@ -351,46 +351,62 @@ class DocumentScannerApp:
  
 
     def extract_citations(self, selected_files, known_titles):
-        citation_graph = {os.path.splitext(os.path.basename(f))[0]: [] for f in selected_files}
+        citation_graph = {}
 
-        # Phrases that often signal a citation
-        citation_phrases = [
-            "according to", "as discussed in", "refer to", "see", 
-            "cited by", "mentioned in", "based on"
+        # Keywords that typically mark the start of citation section
+        ref_section_keywords = [
+            "references", "works cited", "bibliography", "cited works", "literature cited"
         ]
 
-        for file_path in selected_files:
-            with open(file_path, 'r', encoding='utf8') as f:
-                text = f.read().lower()  # Make lowercase for easier matching
+        for file in selected_files:
+            doc_title = os.path.splitext(os.path.basename(file))[0]
+            citation_graph[doc_title] = []
 
-            # Get current document title from filename (without extension)
-            current_title = os.path.splitext(os.path.basename(file_path))[0]
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    text = f.read().lower()
 
-            for target_title in known_titles:
-                if target_title == current_title:
-                    continue  # Skip self-citation
+                # Step 1: Try to locate the start of References section
+                ref_start = -1
+                for keyword in ref_section_keywords:
+                    ref_start = text.find(keyword)
+                    if ref_start != -1:
+                        break  # Found one
 
-                target_lower = target_title.lower()
+                if ref_start == -1:
+                    print(f"No References section found in {doc_title}")
+                    continue  # Skip to next file
 
-                # Direct title mention
-                if target_lower in text:
-                    citation_graph[current_title].append(target_title)
-                    continue  # Avoid double counting if direct match is found
+                # Step 2: Slice out only the References section
+                ref_section_text = text[ref_start:]
 
-                # Phrase-based matching
-                for phrase in citation_phrases:
-                    pattern = f"{phrase} {target_lower}"
-                    if pattern in text:
-                        citation_graph[current_title].append(target_title)
-                        break  # Only count once per target title
+                # Step 3: Check if any known titles are mentioned
+                for title in known_titles:
+                    if title.lower() in ref_section_text:
+                        citation_graph[doc_title].append(title)
+
+            except Exception as e:
+                print(f"Error processing {file}: {e}")
+
         return citation_graph
+
 
 
                 
     def show_citation_graph(self):
-        if not hasattr(self, 'citation_graph'):
+        if not hasattr(self, 'citation_graph') or not self.citation_graph:
             print("No citation graph to display yet!")
             return
+        
+        # If a figure already exists, close it first (avoids infinite loop / leak)
+        if hasattr(self, 'current_fig'):
+            plt.close(self.current_fig)
+            del self.current_fig
+        
+        # Clear previous figure if exists
+        if hasattr(self, 'graph_canvas'):
+            self.graph_canvas.get_tk_widget().destroy()  # Remove previous graph
+            del self.graph_canvas  # Remove reference to avoid stacking
 
         # Create graph
         G = nx.DiGraph()
@@ -401,20 +417,37 @@ class DocumentScannerApp:
 
         # Create matplotlib figure
         fig, ax = plt.subplots(figsize=(6, 5))
-        pos = nx.spring_layout(G, k=0.5)
+
+        # Randomize the layout each time (so user sees changes)
+        pos = nx.spring_layout(G, k=0.5, seed=None)  # Remove seed to randomize each draw
+
         nx.draw(G, pos, with_labels=True, node_color='lightblue', 
                 edge_color='gray', node_size=2000, font_size=10, 
                 arrowsize=20, ax=ax)
 
         ax.set_title("Citation Map", fontsize=14)
 
+        # Save fig reference so we can close it later
+        self.current_fig = fig
+        
         # Embed into Tkinter GUI
-        if hasattr(self, 'graph_canvas'):
-            self.graph_canvas.get_tk_widget().destroy()  # Remove previous graph
-
         self.graph_canvas = FigureCanvasTkAgg(fig, master=self.root)
         self.graph_canvas.draw()
-        self.graph_canvas.get_tk_widget().pack(pady=10)                                                 
+        self.graph_canvas.get_tk_widget().pack(pady=10)
+
+    def close_graph_and_back(self):
+        # Close the matplotlib figure if it exists
+        if hasattr(self, 'current_fig'):
+            plt.close(self.current_fig)
+            del self.current_fig
+
+        # Clear graph_canvas if exists (avoid ghost widget)
+        if hasattr(self, 'graph_canvas'):
+            self.graph_canvas.get_tk_widget().destroy()
+            del self.graph_canvas
+
+        self.create_main_menu()
+
 
     def show_citation_graph_ui(self, selected_files):
         self.known_titles = [os.path.splitext(os.path.basename(f))[0] for f in selected_files]
@@ -424,17 +457,15 @@ class DocumentScannerApp:
             widget.destroy()
 
         # Back Button
-        back_button = Button(self.root, text="Back", command=self.create_main_menu, 
+        back_button = Button(self.root, text="Back", command=self.close_graph_and_back, 
                              bg=color2, fg=color6,
                              activebackground= "#6a6a6a", activeforeground=color4,
                              cursor="hand2",
                              font=theFont1)
         back_button.pack(pady=10)
 
-        # Run citation extraction if graph doesn't exist yet
-        if not hasattr(self, 'citation_graph'):
-            self.known_titles = [os.path.splitext(os.path.basename(f))[0] for f in selected_files]
-            self.citation_graph = self.extract_citations(selected_files, self.known_titles)
+        # Extract citations based on selectedd files
+        self.citation_graph = self.extract_citations(selected_files, self.known_titles)
 
         # Now show the embedded graph
         self.show_citation_graph()
