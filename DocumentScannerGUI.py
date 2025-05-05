@@ -50,7 +50,7 @@ class DocumentScannerApp:
         root.configure(bg='#101010')
         dark_title_bar(root)
         root.geometry("+0+0")
-        WindowSet.setScreen(root, wRatio= .27, hRatio= .57) 
+        WindowSet.setScreen(root, wRatio= .27, hRatio= .58) 
         
         self.create_main_menu()
 
@@ -311,7 +311,7 @@ class DocumentScannerApp:
         back_btn.pack()
 
     # Function to alter UI for plagarism check
-    def show_plag_ui(self, selected_files):
+    def show_compare_ui(self, selected_files):
         # Clear window 
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -321,7 +321,7 @@ class DocumentScannerApp:
         file2 = selected_files[1]
 
         # Call plagiarism summary function (returns dict)
-        summary_dict = plagiarism_summary(file1, file2)
+        summary_dict = compare_summary(file1, file2)
 
         # Convert dict to a nicely formatted string
         result_lines = []
@@ -334,7 +334,7 @@ class DocumentScannerApp:
         result_text = "\n".join(result_lines)
 
         # Display result in a Text widget
-        result_label = Label(self.root, text="Plagiarism Detection Result", bg=color1, fg=color2, font=theFont2)
+        result_label = Label(self.root, text="Comparison Result", bg=color1, fg=color2, font=theFont2)
         result_label.pack(pady=10)
 
         result_textbox = Text(self.root, bg=color1, fg=color5, font=theFont1, wrap="word")
@@ -348,6 +348,47 @@ class DocumentScannerApp:
                              cursor="hand2",
                              font=theFont1)
         back_button.pack(pady=10)
+
+    # Function to alter UI for plagarism check
+    def show_plag_ui(self, selected_files):
+        # Clear window 
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        # Path of selected file (just one is expected)
+        file1 = selected_files[0]
+
+        # Call plagiarism summary function (returns list of dicts)
+        summary_list = plagiarism_summary(file1)
+
+        # Optional: Sort by highest similarity first
+        summary_list.sort(key=lambda x: x['Similarity Score (%)'], reverse=True)
+
+        # Convert list of dicts to a nicely formatted string
+        result_lines = []
+        for summary_dict in summary_list:
+            compared_file = summary_dict['Compared File']
+            score = summary_dict['Similarity Score (%)']
+            result_lines.append(f"{compared_file} → {score}% similarity\n")
+
+        result_text = "".join(result_lines)
+
+        # Display result in a Text widget
+        result_label = Label(self.root, text="Plagiarism Detection Result", bg=color1, fg=color2, font=theFont2)
+        result_label.pack(pady=10)
+
+        result_textbox = Text(self.root, bg=color1, fg=color5, font=theFont1, wrap="word")
+        result_textbox.pack(pady=10)
+        result_textbox.insert(END, result_text)
+
+        # Back button to return to main menu
+        back_button = Button(self.root, text="Back", command=lambda: self.create_main_menu(), 
+                            bg=color2, fg=color6,
+                            activebackground="#6a6a6a", activeforeground=color4,
+                            cursor="hand2",
+                            font=theFont1)
+        back_button.pack(pady=10)
+
  
 
     def extract_citations(self, selected_files, known_titles):
@@ -494,10 +535,17 @@ class DocumentScannerApp:
                 return
             self.show_search_ui(selected_files)
         
-        # Handle plagiarism action
-        elif self.current_action =="plagiarism":
+        # Handle comparsion action
+        elif self.current_action =="compare":
             if len(selected_files) !=2:
                 messagebox.showwarning("Please select two files to compare.")
+                return
+            self.show_compare_ui(selected_files)
+
+        # Handle plagiarism action
+        elif self.current_action =="plagiarism":
+            if len(selected_files) > 1:
+                messagebox.showwarning("Please select only one file..")
                 return
             self.show_plag_ui(selected_files)
 
@@ -505,10 +553,9 @@ class DocumentScannerApp:
         elif self.current_action == "compress":
             result_msgs = []
             for fname in selected_files:
-                full_path = os.path.join(DOCUMENTS_FOLDER, fname)
-                compressed_path, huffman_codes = compress_file(full_path)
+                compressed_path, huffman_codes = compress_file(fname)
 
-                original_size = os.path.getsize(full_path)
+                original_size = os.path.getsize(fname)
                 compressed_size = os.path.getsize(compressed_path)
                 compression_ratio = (compressed_size / original_size) * 100
 
