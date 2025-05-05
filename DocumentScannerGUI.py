@@ -240,7 +240,7 @@ class DocumentScannerApp:
 
         # Now clear and update the text
         self.text_display.delete(1.0, END)  # Clear previous text
-        full_path = os.path.join(DOCUMENTS_FOLDER, filename)
+        full_path = filename
         try:
             with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -257,7 +257,7 @@ class DocumentScannerApp:
 
         results = []
         for fname in selected_files:
-            full_path = os.path.join(DOCUMENTS_FOLDER, fname)
+            full_path = fname
             with open(full_path, 'r', encoding='utf-8') as file:
                 text = file.read()
 
@@ -317,8 +317,8 @@ class DocumentScannerApp:
             widget.destroy()
 
         # Paths of selected files
-        file1 = os.path.join(DOCUMENTS_FOLDER, selected_files[0])
-        file2 = os.path.join(DOCUMENTS_FOLDER, selected_files[1])
+        file1 = selected_files[0]
+        file2 = selected_files[1]
 
         # Call plagiarism summary function (returns dict)
         summary_dict = plagiarism_summary(file1, file2)
@@ -390,9 +390,7 @@ class DocumentScannerApp:
 
         return citation_graph
 
-
-
-                
+            
     def show_citation_graph(self):
         if not hasattr(self, 'citation_graph') or not self.citation_graph:
             print("No citation graph to display yet!")
