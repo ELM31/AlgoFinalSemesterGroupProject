@@ -1,4 +1,5 @@
 import sys
+import os
 from difflib import SequenceMatcher
 from algo.KMP_test import kmp_search
 
@@ -93,7 +94,7 @@ def getDuplicatesFromDict(dictionary):
             duplicates[key] = val
     return duplicates
 
-def plagiarism_summary(file1, file2, encoding='utf8', q=101, ignore_case=False):
+def compare_summary(file1, file2, encoding='utf8', q=101, ignore_case=False):
     summary = dict()
 
     # 1. Similarity Score
@@ -113,6 +114,36 @@ def plagiarism_summary(file1, file2, encoding='utf8', q=101, ignore_case=False):
 
     return summary
 
+def plagiarism_summary(selected_file, folder="Documents", encoding='utf8', q=101, ignore_case=False):
+    summary_list = []
+    selected_abs = os.path.abspath(selected_file)
+    
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        
+        # Skip if it's the same file or not a .txt file
+        if not os.path.isfile(file_path) or not file_path.endswith('.txt'):
+            continue
+        if os.path.abspath(file_path) == selected_abs:
+            continue
+        
+        try:
+            # Compare selected_file with this file
+
+            similarity = simpleSimilarity(selected_file, file_path, format=encoding)
+            similarity_score = round(similarity, 2)
+
+    
+
+            # Append only the file name and score
+            summary_list.append({
+                'Compared File': filename,
+                'Similarity Score (%)': similarity_score
+            })
+        except Exception as e:
+            print(f"Error comparing with {filename}: {e}")
+    
+    return summary_list
 
 
 #example use of simpleSimilarity
