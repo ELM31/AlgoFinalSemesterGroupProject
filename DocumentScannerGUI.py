@@ -8,9 +8,9 @@ from cosmetic import WindowSet                                  #Import WindowSe
 from algo.naive_search import naive_search                      # Use of naive search to find patterns
 from cosmetic.dark_title_bar import *                           #Purely cosmetic function to make title bar dark to fit with the theme
 from plagiarismDetection import *                               #For plagarism 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #
-import networkx as nx                                           #
-import matplotlib.pyplot as plt                                 #
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #Imported figureCanvasTkAgg so we can have the citation map inside out GUI
+import networkx as nx                                           #Used for citation map
+import matplotlib.pyplot as plt                                 #Used for citation map
 import pdfplumber                                               #Convert pdf to text
 from datetime import date                                       #For current date 
 
@@ -101,6 +101,7 @@ class DocumentScannerApp:
     
     # Function in import text files and pdfs, pdfs converted into text files
     def import_files(self):
+        #Open files either pdf or txt files
         file_paths = filedialog.askopenfilenames(filetypes=[
             ("Text files", "*.txt"),
             ("PDF files", "*.pdf")
@@ -134,8 +135,6 @@ class DocumentScannerApp:
         self.show_file_list(action="compare")
     def plagiarism_check(self):
         self.show_file_list(action="plagiarism")
-    def naive_search(self):
-        self.show_file_list(action="search")
     def compress_files(self):
         self.show_file_list(action="compress")
     def citation_map(self):
@@ -229,7 +228,7 @@ class DocumentScannerApp:
                           font=theFont1)   
         back_btn.pack()
 
-        # Function for viewing file and searching inside it
+    # Function for viewing file and searching inside it
     def view_file_content(self, filename):
         # Clear window (removes the file list and previous UI)
         for widget in self.root.winfo_children():
@@ -274,8 +273,7 @@ class DocumentScannerApp:
                             font=theFont1)
         back_button.pack(pady=10)
 
-    
-
+    # Function to run naive_search inside the view UI
     def run_naive_search_in_view(self):
         pattern = self.pattern_entry.get()
         if not pattern:
@@ -293,6 +291,7 @@ class DocumentScannerApp:
         # Highlight all matches
         self.highlight_matches(positions, len(pattern))
 
+    # Naive Search hightlight patterns
     def highlight_matches(self, positions, pattern_length):
         # First, remove previous highlights
         self.text_display.tag_remove("highlight", "1.0", END)
@@ -529,8 +528,9 @@ class DocumentScannerApp:
         # Now show the embedded graph
         self.show_citation_graph()
 
-
+    # Main Button pressed call other UIs
     def handle_action(self):
+        #folder file is found in as well as the document name 
         selected_files = [os.path.join(DOCUMENTS_FOLDER, fname) for fname, var in self.file_vars.items() if var.get()]
 
         if not selected_files:
@@ -542,18 +542,7 @@ class DocumentScannerApp:
             if len(selected_files) > 1:
                 messagebox.showwarning("Multiple Selection", "Please select only one file to view.")
                 return
-            # Text box for file content display
-            self.text_display = Text(self.root, width=80, height=20, wrap="word",
-                                     bg=color3, fg=color4)
-            self.text_display.pack(pady=10)
             self.view_file_content(selected_files[0])
-
-        # Handle search action
-        elif self.current_action == "search":
-            if len(selected_files) > 1:
-                messagebox.showwarning("Multiple Selection", "Please select only one file to view.")
-                return
-            self.show_search_ui(selected_files)
         
         # Handle comparsion action
         elif self.current_action =="compare":
@@ -602,7 +591,7 @@ class DocumentScannerApp:
         else: 
             print(f"Action: {self.current_action}, Selected: {selected_files}")
 
-
+# main
 if __name__ == "__main__":
     root = Tk()
     app = DocumentScannerApp(root)
