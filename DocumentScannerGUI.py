@@ -50,7 +50,7 @@ class DocumentScannerApp:
         root.configure(bg='#101010')
         dark_title_bar(root)
         root.geometry("+0+0")
-        WindowSet.setScreen(root, wRatio= .27, hRatio= .58) 
+        WindowSet.setScreen(root, wRatio= .27, hRatio= .77) 
         
         self.create_main_menu()
 
@@ -81,7 +81,6 @@ class DocumentScannerApp:
             ("View Files", self.view_files),
             ("Compare Files", self.compare_files),
             ("Plagiarism Checker", self.plagiarism_check),
-            ("Naive Search", self.naive_search),
             ("Compression", self.compress_files),
             ("Citation Map", self.citation_map)
         ]
@@ -128,7 +127,7 @@ class DocumentScannerApp:
 
         messagebox.showinfo("Import Complete", "Selected files have been imported!")
 
-    # Function to activiate actions in show_file_list 
+    # FunctionS to activiate actions in show_file_list 
     def view_files(self):
         self.show_file_list(action="view")
     def compare_files(self):
@@ -179,7 +178,6 @@ class DocumentScannerApp:
             "view": "View all imported files:",
             "compare": "Select 2 files to compare:",
             "plagiarism": "Select 1 file to check for plagiarism:",
-            "search": "Select 1 file to search:",
             "compress": "Select 1 or more files to compress:",
             "citation": "Choose files for Citation Map"
         }
@@ -231,15 +229,32 @@ class DocumentScannerApp:
                           font=theFont1)   
         back_btn.pack()
 
-    # Funcions for action functions for handle_action
+        # Function for viewing file and searching inside it
     def view_file_content(self, filename):
-        # If text_display does not exist yet, create it
-        if not hasattr(self, "text_display") or not str(self.text_display):
-            self.text_display = Text(self.root, width=80, height=20, wrap="word")
-            self.text_display.pack(pady=10)
+        # Clear window (removes the file list and previous UI)
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
-        # Now clear and update the text
-        self.text_display.delete(1.0, END)  # Clear previous text
+        # Pattern Entry box
+        self.pattern_entry = Entry(self.root, width=30, font=theFont1, bg=color3, fg=color4)
+        self.pattern_entry.pack(pady=5)
+
+        # Search Button
+        self.search_btn = Button(self.root, text="Search in File", 
+                                command=self.run_naive_search_in_view,
+                                bg=color2, fg=color6,
+                                activebackground="#6a6a6a", activeforeground=color4,
+                                cursor="hand2",
+                                font=theFont1)
+        self.search_btn.pack(pady=5)
+
+        # Text box to display file content
+        self.text_display = Text(self.root, width=80, height=20, wrap="word",
+                                bg=color1, fg=color4)
+        self.text_display.pack(pady=10)
+
+        # Load and display the file content
+        self.text_display.delete(1.0, END)  # Clear previous text (just in case)
         full_path = filename
         try:
             with open(full_path, "r", encoding="utf-8") as f:
@@ -247,6 +262,48 @@ class DocumentScannerApp:
                 self.text_display.insert(END, content)
         except Exception as e:
             self.text_display.insert(END, f"Error loading file: {e}")
+
+        # Store the filename so search knows which file to operate on
+        self.current_viewing_file = filename
+
+        # Back button to return to main menu
+        back_button = Button(self.root, text="Back", command=lambda: self.create_main_menu(), 
+                            bg=color2, fg=color6,
+                            activebackground="#6a6a6a", activeforeground=color4,
+                            cursor="hand2",
+                            font=theFont1)
+        back_button.pack(pady=10)
+
+    
+
+    def run_naive_search_in_view(self):
+        pattern = self.pattern_entry.get()
+        if not pattern:
+            messagebox.showwarning("Input Required", "Please enter a pattern to search.")
+            return
+
+        # Read the content from text_display
+        text = self.text_display.get(1.0, END)
+
+        positions = naive_search(text, pattern)
+        if not positions:
+            messagebox.showinfo("Result", "Pattern not found in file.")
+            return
+
+        # Highlight all matches
+        self.highlight_matches(positions, len(pattern))
+
+    def highlight_matches(self, positions, pattern_length):
+        # First, remove previous highlights
+        self.text_display.tag_remove("highlight", "1.0", END)
+
+        # Define highlight style
+        self.text_display.tag_config("highlight", background=color5, foreground=color6)
+
+        for pos in positions:
+            start = f"1.0 + {pos} chars"
+            end = f"1.0 + {pos + pattern_length} chars"
+            self.text_display.tag_add("highlight", start, end)
 
     # function for naive search 
     def run_naive_search(self, selected_files):
@@ -277,40 +334,7 @@ class DocumentScannerApp:
         self.search_results_textbox.pack(pady=10)
         self.search_results_textbox.insert(END, "\n\n".join(results))
     
-    # Function to alter UI for search 
-    def show_search_ui(self, selected_files):
-        # Clear window
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
-        # Instruction Label
-        instr_label = Label(self.root, text="Enter the pattern to search:", 
-                            font=theFont2, bg=color6, fg=color4)
-        instr_label.pack(pady=10)
-
-        # Entry box for pattern
-        self.pattern_entry = Entry(self.root, width=40, font=theFont1, bg=color3, fg=color4)
-        self.pattern_entry.pack(pady=5)
-
-        # Search Button
-        search_btn = Button(self.root, text="Search", 
-                            command=lambda: self.run_naive_search(selected_files),
-                            bg=color2, fg=color6,
-                            activebackground= "#6a6a6a", activeforeground=color4,
-                            cursor="hand2",
-                            font=theFont1)
-        search_btn.pack(pady=10)
-
-        # Back Button
-        back_btn = Button(self.root, text="Back", 
-                        command=lambda: self.show_file_list(action="search"),
-                        bg=color2, fg=color6,
-                        activebackground= "#6a6a6a", activeforeground=color4,
-                        cursor="hand2",
-                        font=theFont1)
-        back_btn.pack()
-
-    # Function to alter UI for plagarism check
+    # Function to alter UI for comparison check
     def show_compare_ui(self, selected_files):
         # Clear window 
         for widget in self.root.winfo_children():
@@ -389,14 +413,12 @@ class DocumentScannerApp:
                             font=theFont1)
         back_button.pack(pady=10)
 
- 
-
     def extract_citations(self, selected_files, known_titles):
         citation_graph = {}
 
         # Keywords that typically mark the start of citation section
         ref_section_keywords = [
-            "references", "works cited", "bibliography", "cited works", "literature cited"
+            "works cited", "bibliography", "cited works", "literature cited"
         ]
 
         for file in selected_files:
@@ -430,8 +452,7 @@ class DocumentScannerApp:
                 print(f"Error processing {file}: {e}")
 
         return citation_graph
-
-            
+     
     def show_citation_graph(self):
         if not hasattr(self, 'citation_graph') or not self.citation_graph:
             print("No citation graph to display yet!")
@@ -486,7 +507,6 @@ class DocumentScannerApp:
             del self.graph_canvas
 
         self.create_main_menu()
-
 
     def show_citation_graph_ui(self, selected_files):
         self.known_titles = [os.path.splitext(os.path.basename(f))[0] for f in selected_files]
